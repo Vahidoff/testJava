@@ -16,7 +16,13 @@ import java.sql.Timestamp;
 public class CreateServlet extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        try {
+            req.setAttribute("users", UsersDeposit.getInstance().getAllUserCS());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         req.getRequestDispatcher("/WEB-INF/views/UsersView.jsp").forward(req, resp);
     }
 

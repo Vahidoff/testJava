@@ -17,7 +17,14 @@ import java.sql.Timestamp;
 public class UpdateServlet extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        String login = req.getParameter("login");
+        try {
+            req.setAttribute("user", UsersDeposit.getInstance().getUserCS(login));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         req.getRequestDispatcher("/WEB-INF/views/update.jsp").forward(req, resp);
     }
 

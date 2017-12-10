@@ -135,7 +135,7 @@ public class UsersDeposit {
         return result;
     }
 
-    public List<String> getAllLogin() {
+    private List<String> getAllLogin() {
         List<String> allLogin = new ArrayList<>();
         Connection conn = this.connectDb();
         try {
@@ -149,6 +149,19 @@ public class UsersDeposit {
         }
         this.disconnectDb(conn);
         return allLogin;
+    }
+
+    public List<UserCS> getAllUserCS() {
+        List<UserCS> users = new ArrayList<>();
+        List<String> login = this.getAllLogin();
+        for (String temp : login) {
+            try {
+                users.add(this.getUserCS(temp));
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return users;
     }
 
     private void getProperties() throws IOException {
