@@ -27,15 +27,19 @@ public class UsersDeposit {
     private String tableName;
     private static final Logger LOG = LoggerFactory.getLogger(UsersDeposit.class);
 
+    private String url;
+    private String user;
+    private String password;
+
     private PreparedStatement ps;
     private ResultSet rs;
     private Statement st;
+    private Connection conn;
     private static UsersDeposit instance;
-    private DataSource data;
 
     private UsersDeposit() throws IOException, SQLException {
         this.getProperties();
-        this.createTable();
+        this.connectDb();
     }
 
     @GuardedBy("UsersDeposit.class")
@@ -50,8 +54,8 @@ public class UsersDeposit {
         return instance;
     }
 
-    public UserCS getUserCS(String login) throws SQLException {
-        Connection conn = this.connectDb();
+    public UserCS getUserCS(String login) throws SQLException, IOException {
+        this.connectDb();
         UserCS user = null;
         String request = String.format("SELECT name, login, email, date FROM %s WHERE login = ?",
                 this.tableName);
@@ -74,8 +78,8 @@ public class UsersDeposit {
     }
 
     public boolean updateUserCS(String modifyName, String login, String newEmail, Timestamp date)
-            throws SQLException {
-        Connection conn = this.connectDb();
+            throws SQLException, IOException {
+        this.connectDb();
         boolean result = false;
         UserCS user = getUserCS(login);
         conn.setAutoCommit(false);
@@ -97,7 +101,7 @@ public class UsersDeposit {
 
     public boolean addUserCS(String userName, String userLogin, String userEmail, Timestamp date)
             throws SQLException, IOException {
-        Connection conn = this.connectDb();
+        this.connectDb();
         boolean result = false;
         conn.setAutoCommit(false);
         String request = String.format("INSERT INTO %s (name, login, email, date) VALUES(?,?,?,?)",
@@ -118,9 +122,9 @@ public class UsersDeposit {
         return result;
     }
 
-    public boolean deleteUserCS(String login) throws SQLException {
-        Connection conn = this.connectDb();
+    public boolean deleteUserCS(String login) throws SQLException, IOException {
         boolean result = false;
+        this.connectDb();
         conn.setAutoCommit(false);
         String request = String.format("DELETE FROM %s WHERE login = '%s'", this.tableName, login);
         this.st = conn.createStatement();
@@ -135,9 +139,9 @@ public class UsersDeposit {
         return result;
     }
 
-    private List<String> getAllLogin() {
+    private List<String> getAllLogin() throws IOException, SQLException {
+        this.connectDb();
         List<String> allLogin = new ArrayList<>();
-        Connection conn = this.connectDb();
         try {
             this.st = conn.createStatement();
             this.rs = this.st.executeQuery(String.format("SELECT login FROM %s", this.tableName));
@@ -151,7 +155,7 @@ public class UsersDeposit {
         return allLogin;
     }
 
-    public List<UserCS> getAllUserCS() {
+    public List<UserCS> getAllUserCS() throws IOException, SQLException {
         List<UserCS> users = new ArrayList<>();
         List<String> login = this.getAllLogin();
         for (String temp : login) {
@@ -169,71 +173,54 @@ public class UsersDeposit {
         try (InputStream in = this.getClass().getClassLoader().
                 getResourceAsStream("connection.properties")) {
             properties.load(in);
-            String url = properties.getProperty("url");
-            String user = properties.getProperty("user");
-            String password = properties.getProperty("password");
+            this.url = properties.getProperty("url");
+            this.user = properties.getProperty("user");
+            this.password = properties.getProperty("password");
             this.tableName = properties.getProperty("tableName");
-            String driverDB = properties.getProperty("driverDB");
-
-            this.data = new DataSource();
-            this.data.setDriverClassName(driverDB);
-            this.data.setUsername(user);
-            this.data.setPassword(password);
-            this.data.setUrl(url);
-            this.data.setMaxActive(100);
-            this.data.setInitialSize(10);
-            this.data.setRemoveAbandonedTimeout(60);
-            this.data.setMinEvictableIdleTimeMillis(30000);
-            this.data.setMinIdle(10);
-            this.data.setJdbcInterceptors(
-                    "org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;"
-                            + " org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer");
-        } catch (IOException e) {
+        } catch (IOException  e) {
             LOG.error(e.getMessage(), e);
         }
     }
 
-    private Connection connectDb() {
-        Connection conn = null;
+    private void connectDb() throws SQLException, IOException {
         try {
-            conn = this.data.getConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            Class.forName("org.postgresql.Driver");
+            this.conn = DriverManager.getConnection(this.url, this.user, this.password);
+        } catch (ClassNotFoundException | SQLException e) {
+            LOG.error(e.getMessage(), e);
         }
-        return conn;
-    }
-
-    private void createTable() throws SQLException, IOException {
-        Connection conn = this.connectDb();
-
         try {
-            this.rs = conn.getMetaData().
+            this.rs = this.conn.getMetaData().
                     getTables(null, null, this.tableName, null);
             if (!this.rs.next()) {
-                this.st = conn.createStatement();
-                try (InputStream in = this.getClass().getClassLoader().
-                        getResourceAsStream("createTableCS.sql")) {
-                    Scanner sc = new Scanner(in);
-                    String line;
-                    StringBuilder command = new StringBuilder();
-                    do {
-                        line = sc.nextLine();
-                        if (!line.endsWith(";")) {
-                            command.append(" ").append(line);
-                        } else {
-                            command.append(line);
-                            this.st.execute(command.toString());
-                        }
-                    } while (sc.hasNext());
-                } catch (SQLException | IOException e) {
-                    LOG.error(e.getMessage(), e);
-                }
+                this.createTable();
             }
         } catch (SQLException e) {
             LOG.error(e.getMessage(), e);
         }
-        this.disconnectDb(conn);
     }
+
+    private void createTable() throws SQLException, IOException {
+        this.st = this.conn.createStatement();
+        try (InputStream in = this.getClass().getClassLoader().
+                getResourceAsStream("createTableCS.sql")) {
+            Scanner sc = new Scanner(in);
+            String line;
+            StringBuilder command = new StringBuilder();
+            while (sc.hasNext()) {
+                line = sc.nextLine();
+                if (!line.endsWith(";")) {
+                    command.append(" ").append(line);
+                } else {
+                    command.append(line);
+                    this.st.execute(command.toString());
+                }
+            }
+        } catch (SQLException | IOException e) {
+            LOG.error(e.getMessage(), e);
+        }
+    }
+
 
     private void disconnectDb(Connection conn) {
         try {
