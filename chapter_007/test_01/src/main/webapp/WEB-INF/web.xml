@@ -1,0 +1,12 @@
+<web-app>
+    <servlet>
+        <servlet-name>Test01</servlet-name>
+        <servlet-class>ru.job4j.testservlet.TestServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>Test01</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+</web-app>
