@@ -5,16 +5,25 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 
+/**
+ * //TODO add comments.
+ *
+ * @author Petr Arsentev (parsentev@yandex.ru)
+ * @version $Id$
+ * @since 0.1
+ */
 public class TestServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException {
-        try {
-            req.getRequestDispatcher("/WEB-INF/views/test01.jsp").forward(req, resp);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.setAttribute("users", Arrays.asList(new User("petr", "petr")));
+        request.getRequestDispatcher("/WEB-INF/views/index.jsp").forward(
+                request, response);
     }
 }
