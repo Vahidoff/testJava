@@ -41,7 +41,6 @@
     </dependencies>
     <modules>
         <module>http_02</module>
-        <module>servlet_03</module>
-        <module>test_01</module>
+        <module>jstl</module>
     </modules>
 </project>
