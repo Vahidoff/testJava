@@ -41,6 +41,5 @@
     </dependencies>
     <modules>
         <module>http_02</module>
-        <module>jstl</module>
     </modules>
 </project>
