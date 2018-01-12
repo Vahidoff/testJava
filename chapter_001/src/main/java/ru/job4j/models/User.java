@@ -5,13 +5,13 @@ public class User {
     private int id;
     private String name;
     private String password;
-    private String created;
+    private boolean created;
 
-    public String getCreated() {
+    public boolean getCreated() {
         return created;
     }
 
-    public void setCreated(String created) {
+    public void setCreated(boolean created) {
         this.created = created;
     }
 
