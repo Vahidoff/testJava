@@ -1,0 +1,12 @@
+<hibernate-mapping xmlns="http://www.hibernate.org/xsd/hibernate-mapping">
+    <class name="ru.job4j.models.User" table="duties">
+        <id name="id" column="id">
+            <generator class="identity" />
+        </id>
+        <property name="name" column="description" />
+        <property name="password" column="date" />
+        <property name="created" column="done" />
+
+        <property column="age" name="created" type="java.lang.Integer"/>
+    </class>
+</hibernate-mapping>
