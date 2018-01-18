@@ -16,7 +16,7 @@
     <modules>
         <module>chapter_007</module>
         <module>chapter_001</module>
-        <module>java-a-to-z</module>
+        <module>chapter_008</module>
     </modules>
 
     <dependencies>
